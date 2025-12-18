@@ -4,6 +4,8 @@ import pandas as pd
 import os
 import altair as alt # Uvozimo Altair za grafe
 from transformers import pipeline
+from wordcloud import WordCloud  # Uvozimo WordCloud
+import matplotlib.pyplot as plt   # Uvozimo Matplotlib za izris slike
 
 # --- 1. KONFIGURACIJA STRANI ---
 st.set_page_config(
@@ -113,7 +115,7 @@ elif view_option == "Testimonials":
         st.warning("No testimonials found.")
 
 # ==========================================
-# C) REVIEWS VIEW (SENTIMENT + VIZUALIZACIJA)
+# C) REVIEWS VIEW (SENTIMENT + VIZUALIZACIJA + WORD CLOUD)
 # ==========================================
 elif view_option == "Reviews":
     st.write("Filter reviews by month (Year 2023) and analyze sentiment.")
@@ -125,7 +127,7 @@ elif view_option == "Reviews":
         df_reviews['date_obj'] = pd.to_datetime(df_reviews['date'], errors='coerce')
         df_reviews = df_reviews.dropna(subset=['date_obj'])
         
-        # Slider
+        # --- ORIGINALNI SLIDER (BREZ STOLPCEV) ---
         months = ["January", "February", "March", "April", "May", "June", 
                   "July", "August", "September", "October", "November", "December"]
         selected_month_name = st.select_slider("Select a month in 2023:", options=months)
@@ -144,6 +146,26 @@ elif view_option == "Reviews":
         
         if not filtered_df.empty:
             
+            # --- 1. WORD CLOUD (BONUS) ---
+            st.markdown("### ☁️ Word Cloud")
+            try:
+                # Združimo ves tekst v en dolg string
+                all_text = " ".join(filtered_df['text'].tolist())
+                
+                # Generiramo oblak
+                wordcloud = WordCloud(width=800, height=300, background_color='white').generate(all_text)
+                
+                # Prikazemo s pyplot (matplotlib)
+                fig, ax = plt.subplots(figsize=(10, 5))
+                ax.imshow(wordcloud, interpolation='bilinear')
+                ax.axis("off") # Skrijemo osi
+                st.pyplot(fig)
+            except Exception as e:
+                st.warning(f"Could not generate Word Cloud: {e}")
+
+            st.divider()
+
+            # --- 2. AI SENTIMENT ANALYSIS ---
             st.markdown("### 🤖 AI Sentiment Analysis")
             
             with st.spinner('Calculating sentiment...'):
